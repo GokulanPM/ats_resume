@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Resume Analyzer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Global Styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+    }
+    body {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* Container */
+    .container {
+      background: #fff;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 700px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+    .container:hover {
+      transform: translateY(-5px);
+    }
+
+    h1 {
+      color: #333;
+      font-size: 2rem;
+      margin-bottom: 15px;
+    }
+    p.subtitle {
+      color: #555;
+      margin-bottom: 30px;
+      font-size: 1rem;
+    }
+
+    /* Inputs */
+    input[type="file"], textarea {
+      width: 100%;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+    input[type="file"]:focus, textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    /* Button */
+    button {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 15px 30px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: opacity 0.3s;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+
+    /* Result Box */
+    .result {
+      background: #f4f5fa;
+      margin-top: 30px;
+      text-align: left;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .result h3 {
+      color: #667eea;
+      margin-bottom: 15px;
+    }
+    .result p {
+      margin-bottom: 10px;
+      line-height: 1.5;
+      color: #333;
+    }
+    .result ul {
+      margin-left: 20px;
+      margin-bottom: 10px;
+      color: #555;
+    }
+    .loader {
+      margin: 20px auto;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 40px;
+      font-size: 0.85rem;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>AI Resume Analyzer</h1>
+    <p class="subtitle">Upload your resume and paste the job description to get instant ATS insights.</p>
+
+    <input type="file" id="resume" accept="application/pdf">
+    <textarea id="jd" rows="6" placeholder="Paste Job Description here..."></textarea>
+    <button onclick="analyzeResume()">Analyze Resume</button>
+
+    <div id="output" class="result"></div>
+  </div>
+
+  <footer>Powered by Google Gemini API &copy; 2026</footer>
+
+  <script>
+    async function analyzeResume() {
+      const resume = document.getElementById('resume').files[0];
+      const jd = document.getElementById('jd').value.trim();
+
+      if (!resume || !jd) {
+        alert("Please upload your resume and paste the job description.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("resume", resume);
+      formData.append("jobDescription", jd);
+
+      // Show loader
+      document.getElementById("output").innerHTML = '<div class="loader"></div>';
+
+      
+      try {
+        const response = await fetch("http://localhost:5000/analyze", {
+          method: "POST",
+          body: formData
+        });
+        const data = await response.json();
+
+        // Display result
+        document.getElementById("output").innerHTML = `
+          <h3>ATS Score: ${data.atsScore}/100</h3>
+          <p><b>Matched Skills:</b> ${data.matchedSkills.join(", ")}</p>
+          <p><b>Missing Skills:</b> ${data.missingSkills.join(", ")}</p>
+          <p><b>Suggested Improvements:</b></p>
+          <ul>${data.improvements.map(item => `<li>${item}</li>`).join("")}</ul>
+        `;
+      } catch (error) {
+        document.getElementById("output").innerHTML = "<p style='color:red;'>Error analyzing resume. Please try again.</p>";
+        console.error(error);
+      }
+    }
+  </script>
+</body>
+</html>
